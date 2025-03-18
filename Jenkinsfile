@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        node {
-            label 'any'
-        }
-    }
+    agent any
 
     environment {
         SONAR_HOST_URL = credentials('SONAR_HOST_URL')
