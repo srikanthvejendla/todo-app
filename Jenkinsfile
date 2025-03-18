@@ -13,43 +13,36 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                node {
-                    checkout scm
-                }
+                git branch: 'main',
+                    url: 'https://github.com/srikanthvejendia/todo-app.git'  // Replace with your repo URL
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                node {
-                    sh 'npm ci'
-                }
+                sh 'npm ci'
             }
         }
 
         stage('Run Tests with Coverage') {
             steps {
-                node {
-                    sh 'npm run coverage'
-                }
+                sh 'npm run coverage'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                node {
-                    script {
-                        def scannerHome = tool 'SonarScanner'
-                        withSonarQubeEnv('SonarQube') {
-                            sh """
-                                ${scannerHome}/bin/sonar-scanner \
-                                    -Dsonar.projectKey=modern-todo \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.tests=src \
-                                    -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
-                                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-                            """
-                        }
+                script {
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=modern-todo \
+                                -Dsonar.sources=src \
+                                -Dsonar.tests=src \
+                                -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                        """
                     }
                 }
             }
@@ -57,10 +50,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                node {
-                    timeout(time: 1, unit: 'HOURS') {
-                        waitForQualityGate abortPipeline: true
-                    }
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -68,9 +59,7 @@ pipeline {
 
     post {
         always {
-            node {
-                cleanWs()
-            }
+            cleanWs()
         }
     }
 } 
