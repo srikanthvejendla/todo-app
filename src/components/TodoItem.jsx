@@ -31,6 +31,7 @@ const TodoItem = ({ todo, onToggle, onDelete, onEdit }) => {
         checked={todo.completed}
         onChange={() => onToggle(todo.id)}
         className="w-5 h-5 accent-purple-500"
+        aria-label={`Toggle todo ${todo.text}`}
       />
       
       {isEditing ? (
@@ -51,6 +52,7 @@ const TodoItem = ({ todo, onToggle, onDelete, onEdit }) => {
         <button
           onClick={handleEdit}
           className="p-1 text-gray-600 hover:text-purple-500"
+          aria-label={`Edit todo ${todo.text}`}
         >
           {isEditing ? (
             <CheckIcon className="w-5 h-5" />
@@ -61,6 +63,7 @@ const TodoItem = ({ todo, onToggle, onDelete, onEdit }) => {
         <button
           onClick={() => onDelete(todo.id)}
           className="p-1 text-gray-600 hover:text-red-500"
+          aria-label={`Delete todo ${todo.text}`}
         >
           <TrashIcon className="w-5 h-5" />
         </button>
