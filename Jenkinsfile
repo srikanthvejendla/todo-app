@@ -71,28 +71,12 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
-                        // Detect architecture and download appropriate scanner
-                        sh """
-                            ARCH=\$(uname -m)
-                            if [ "\$ARCH" = "aarch64" ] || [ "\$ARCH" = "arm64" ]; then
-                                SCANNER_URL="https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-arm64.zip"
-                            else
-                                SCANNER_URL="https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
-                            fi
+                        // Install and run sonarqube scanner using npm
+                        sh '''
+                            . $NVM_DIR/nvm.sh
+                            nvm use 18
+                            npm install -g sonarqube-scanner
                             
-                            curl -L -o sonar-scanner.zip \$SCANNER_URL
-                            unzip -o sonar-scanner.zip
-                            mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux* sonar-scanner
-                            export PATH=\$PATH:\$PWD/sonar-scanner/bin
-                            
-                            # Verify scanner architecture
-                            file sonar-scanner/bin/sonar-scanner
-                        """
-
-                        // Run SonarQube Analysis
-                        sh """
-                            export PATH=\$PATH:\$PWD/sonar-scanner/bin
-                            export SONAR_SCANNER_OPTS="-Xmx512m"
                             sonar-scanner \
                                 -Dsonar.projectKey=todo-app \
                                 -Dsonar.sources=src \
@@ -101,7 +85,7 @@ pipeline {
                                 -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.login=${SONAR_TOKEN}
-                        """
+                        '''
 
                         // Wait for Quality Gate
                         timeout(time: 1, unit: 'HOURS') {
