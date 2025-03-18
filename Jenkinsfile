@@ -7,14 +7,25 @@ pipeline {
     }
 
     tools {
-        nodejs 'NodeJS 18' // Use the name configured in Jenkins Global Tool Configuration
+        nodejs "NodeJS"  // Note: changed from 'nodejs' to 'NodeJS'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/srikanthvejendia/todo-app.git'  // Replace with your repo URL
+                git url: 'https://github.com/srikanthvejendia/todo-app.git',
+                    branch: 'main'
+            }
+        }
+
+        stage('Setup Node.js') {
+            steps {
+                sh '''
+                    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                    sudo apt-get install -y nodejs
+                    node --version
+                    npm --version
+                '''
             }
         }
 
