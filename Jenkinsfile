@@ -4,10 +4,7 @@ pipeline {
     environment {
         SONAR_HOST_URL = credentials('sonar-host-url')
         SONAR_TOKEN = credentials('sonar-token')
-    }
-
-    tools {
-        nodejs "NodeJS"  // Note: changed from 'nodejs' to 'NodeJS'
+        PATH = "$PATH:/usr/local/bin"  // Add Node.js to PATH
     }
 
     stages {
