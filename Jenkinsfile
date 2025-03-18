@@ -1,9 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label 'any'
+        }
+    }
 
     environment {
-        SONAR_HOST_URL = credentials('sonar-host-url')
-        SONAR_TOKEN = credentials('sonar-token')
+        SONAR_HOST_URL = credentials('SONAR_HOST_URL')
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
         PATH = "$PATH:/usr/local/bin"  // Add Node.js to PATH
     }
 
