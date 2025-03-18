@@ -71,6 +71,12 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
+                        // Install required tools
+                        sh '''
+                            apt-get update
+                            apt-get install -y wget unzip
+                        '''
+
                         // Install SonarQube Scanner
                         sh """
                             wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
