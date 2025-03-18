@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label 'built-in'  // Use the built-in node
+        }
+    }
 
     environment {
         SONAR_HOST_URL = credentials('SONAR_HOST_URL')
