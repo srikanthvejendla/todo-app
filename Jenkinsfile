@@ -2,54 +2,54 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL = credentials('SONAR_HOST_URL')
-        SONAR_TOKEN = credentials('SONAR_TOKEN')
-        NODE_VERSION = '18'
+        SONAR_HOST_URL = credentials('sonar-host-url')
+        SONAR_TOKEN = credentials('sonar-token')
+    }
+
+    tools {
+        nodejs 'NodeJS 18' // Use the name configured in Jenkins Global Tool Configuration
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Setup Node.js') {
-            steps {
-                script {
-                    // Use nvm or node tool depending on your Jenkins setup
-                    nvm(nodeVersion: env.NODE_VERSION) {
-                        sh 'node --version'
-                    }
+                node {
+                    checkout scm
                 }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                node {
+                    sh 'npm ci'
+                }
             }
         }
 
         stage('Run Tests with Coverage') {
             steps {
-                sh 'npm run coverage'
+                node {
+                    sh 'npm run coverage'
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    def scannerHome = tool 'SonarScanner'
-                    withSonarQubeEnv('SonarQube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=modern-todo \
-                                -Dsonar.sources=src \
-                                -Dsonar.tests=src \
-                                -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
-                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-                        """
+                node {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        withSonarQubeEnv('SonarQube') {
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=modern-todo \
+                                    -Dsonar.sources=src \
+                                    -Dsonar.tests=src \
+                                    -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
+                                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                            """
+                        }
                     }
                 }
             }
@@ -57,8 +57,10 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
+                node {
+                    timeout(time: 1, unit: 'HOURS') {
+                        waitForQualityGate abortPipeline: true
+                    }
                 }
             }
         }
@@ -66,7 +68,9 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
     }
 } 
