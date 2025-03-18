@@ -66,10 +66,11 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube Analysis & Quality Gate') {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
+                        // Run SonarQube Analysis
                         sh """
                             sonar-scanner \
                                 -Dsonar.projectKey=modern-todo \
@@ -80,16 +81,11 @@ pipeline {
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.login=${SONAR_TOKEN}
                         """
-                    }
-                }
-            }
-        }
 
-        stage('Quality Gate') {
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    timeout(time: 1, unit: 'HOURS') {
-                        waitForQualityGate abortPipeline: false
+                        // Wait for Quality Gate
+                        timeout(time: 1, unit: 'HOURS') {
+                            waitForQualityGate abortPipeline: false
+                        }
                     }
                 }
             }
