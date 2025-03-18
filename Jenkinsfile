@@ -71,16 +71,10 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
-                        // Install required tools
-                        sh '''
-                            apt-get update
-                            apt-get install -y wget unzip
-                        '''
-
-                        // Install SonarQube Scanner
+                        // Install SonarQube Scanner using curl
                         sh """
-                            wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
-                            unzip -o sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                            curl -L -o sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                            unzip -o sonar-scanner.zip
                             mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux sonar-scanner
                             export PATH=\$PATH:\$PWD/sonar-scanner/bin
                         """
