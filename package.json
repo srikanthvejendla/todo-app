@@ -38,7 +38,12 @@
   },
   "vitest": {
     "coverage": {
-      "reporter": ["text", "lcov"]
+      "reporter": ["text", "lcov"],
+      "reportsDirectory": "./coverage",
+      "all": true,
+      "include": ["src/**/*.{js,jsx}"],
+      "exclude": ["src/**/*.test.{js,jsx}", "src/test/**/*"],
+      "skipFull": false
     }
   },
   "jest": {
