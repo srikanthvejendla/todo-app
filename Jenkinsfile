@@ -71,29 +71,20 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
-                        // Install and run sonarqube scanner using npm
                         sh '''
                             . $NVM_DIR/nvm.sh
                             nvm use 18
                             npm install -g sonarqube-scanner
-
-                            # Debug: Check SonarQube connection
-                            echo "Testing connection to SonarQube server..."
-                            curl -I ${SONAR_HOST_URL}
                             
-                            # Run scanner with debug output
+                            # Basic test configuration first
                             sonar-scanner \
-                                -Dsonar.verbose=true \
                                 -Dsonar.projectKey=todo-app \
                                 -Dsonar.sources=src \
-                                -Dsonar.tests=src \
-                                -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
-                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
-                                -Dsonar.login=${SONAR_TOKEN}
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -X
                         '''
 
-                        // Wait for Quality Gate
                         timeout(time: 1, unit: 'HOURS') {
                             waitForQualityGate abortPipeline: false
                         }
