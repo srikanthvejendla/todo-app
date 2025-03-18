@@ -5,12 +5,17 @@ pipeline {
         }
     }
 
+    tools {
+        nodejs 'NodeJS'  // If you have NodeJS configured in Jenkins
+    }
+
     environment {
         SONAR_HOST_URL = credentials('SONAR_HOST_URL')
         SONAR_TOKEN = credentials('sonar-token')
         PATH = "$PATH:/usr/local/bin"  // Add Node.js to PATH
         NVM_DIR = "/var/jenkins_home/.nvm"
         SONAR_SCANNER_VERSION = "5.0.1.3006"  // Latest stable version
+        SONAR_SCANNER_OPTS = "-Dsonar.host.url=http://sonarqube:9000"  // Add this line
     }
 
     stages {
@@ -71,30 +76,16 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
-                        sh '''
-                            . $NVM_DIR/nvm.sh
-                            nvm use 18
-                            
-                            # Print SonarQube URL for debugging
-                            echo "SONAR_HOST_URL=${SONAR_HOST_URL}"
-                            
-                            # Test connection to SonarQube
-                            curl -I "${SONAR_HOST_URL}" || echo "Failed to connect to SonarQube"
-                            
-                            # Install sonar-scanner
-                            npm install -g sonarqube-scanner
-                            
-                            # Run sonar-scanner with explicit URL
-                            sonar-scanner \
-                                -Dsonar.projectKey=todo-app \
-                                -Dsonar.sources=src \
-                                -Dsonar.host.url="${SONAR_HOST_URL}" \
-                                -Dsonar.login="${SONAR_TOKEN}" \
-                                -X
-                        '''
-
-                        timeout(time: 1, unit: 'HOURS') {
-                            waitForQualityGate abortPipeline: false
+                        script {
+                            def scannerHome = tool 'SonarScanner'  // If you have SonarScanner configured in Jenkins
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=todo-app \
+                                    -Dsonar.sources=src \
+                                    -Dsonar.host.url="http://sonarqube:9000" \
+                                    -Dsonar.login="${SONAR_TOKEN}" \
+                                    -X
+                            """
                         }
                     }
                 }
