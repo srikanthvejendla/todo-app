@@ -18,7 +18,7 @@ pipeline {
                     $class: 'GitSCM',
                     branches: [[name: 'main']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/your-username/modern-todo.git',  // Update this URL
+                        url: 'https://github.com/srikanthvejendla/todo-app.git',  // Your actual repository URL
                         credentialsId: 'github-token'
                     ]]
                 ])
