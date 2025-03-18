@@ -74,14 +74,22 @@ pipeline {
                         sh '''
                             . $NVM_DIR/nvm.sh
                             nvm use 18
+                            
+                            # Print SonarQube URL for debugging
+                            echo "SONAR_HOST_URL=${SONAR_HOST_URL}"
+                            
+                            # Test connection to SonarQube
+                            curl -I "${SONAR_HOST_URL}" || echo "Failed to connect to SonarQube"
+                            
+                            # Install sonar-scanner
                             npm install -g sonarqube-scanner
                             
-                            # Basic test configuration first
+                            # Run sonar-scanner with explicit URL
                             sonar-scanner \
                                 -Dsonar.projectKey=todo-app \
                                 -Dsonar.sources=src \
-                                -Dsonar.host.url=${SONAR_HOST_URL} \
-                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.host.url="${SONAR_HOST_URL}" \
+                                -Dsonar.login="${SONAR_TOKEN}" \
                                 -X
                         '''
 
