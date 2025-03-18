@@ -10,6 +10,7 @@ pipeline {
         SONAR_TOKEN = credentials('sonar-token')
         PATH = "$PATH:/usr/local/bin"  // Add Node.js to PATH
         NVM_DIR = "/var/jenkins_home/.nvm"
+        SONAR_SCANNER_VERSION = "5.0.1.3006"  // Latest stable version
     }
 
     stages {
@@ -70,10 +71,19 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
+                        // Install SonarQube Scanner
+                        sh """
+                            wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                            unzip -o sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                            mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux sonar-scanner
+                            export PATH=\$PATH:\$PWD/sonar-scanner/bin
+                        """
+
                         // Run SonarQube Analysis
                         sh """
+                            export PATH=\$PATH:\$PWD/sonar-scanner/bin
                             sonar-scanner \
-                                -Dsonar.projectKey=modern-todo \
+                                -Dsonar.projectKey=todo-app \
                                 -Dsonar.sources=src \
                                 -Dsonar.tests=src \
                                 -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
