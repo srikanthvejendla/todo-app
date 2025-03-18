@@ -71,17 +71,28 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
-                        // Install SonarQube Scanner using curl
+                        // Detect architecture and download appropriate scanner
                         sh """
-                            curl -L -o sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+                            ARCH=\$(uname -m)
+                            if [ "\$ARCH" = "aarch64" ] || [ "\$ARCH" = "arm64" ]; then
+                                SCANNER_URL="https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-arm64.zip"
+                            else
+                                SCANNER_URL="https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
+                            fi
+                            
+                            curl -L -o sonar-scanner.zip \$SCANNER_URL
                             unzip -o sonar-scanner.zip
-                            mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux sonar-scanner
+                            mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux* sonar-scanner
                             export PATH=\$PATH:\$PWD/sonar-scanner/bin
+                            
+                            # Verify scanner architecture
+                            file sonar-scanner/bin/sonar-scanner
                         """
 
                         // Run SonarQube Analysis
                         sh """
                             export PATH=\$PATH:\$PWD/sonar-scanner/bin
+                            export SONAR_SCANNER_OPTS="-Xmx512m"
                             sonar-scanner \
                                 -Dsonar.projectKey=todo-app \
                                 -Dsonar.sources=src \
