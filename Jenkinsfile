@@ -5,17 +5,11 @@ pipeline {
         }
     }
 
-    tools {
-        nodejs 'NodeJS'  // If you have NodeJS configured in Jenkins
-    }
-
     environment {
-        SONAR_HOST_URL = credentials('SONAR_HOST_URL')
+        SONAR_HOST_URL = 'http://sonarqube:9000'  // Set explicitly
         SONAR_TOKEN = credentials('sonar-token')
         PATH = "$PATH:/usr/local/bin"  // Add Node.js to PATH
         NVM_DIR = "/var/jenkins_home/.nvm"
-        SONAR_SCANNER_VERSION = "5.0.1.3006"  // Latest stable version
-        SONAR_SCANNER_OPTS = "-Dsonar.host.url=http://sonarqube:9000"  // Add this line
     }
 
     stages {
@@ -72,22 +66,42 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis & Quality Gate') {
+        stage('SonarQube Analysis') {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('SonarQube') {
                         script {
-                            def scannerHome = tool 'SonarScanner'  // If you have SonarScanner configured in Jenkins
+                            def scannerHome = tool 'SonarScanner'
                             sh """
+                                # Debug info
+                                echo "Scanner Home: ${scannerHome}"
+                                echo "SonarQube URL: ${SONAR_HOST_URL}"
+                                
+                                # Test SonarQube connection
+                                curl -v ${SONAR_HOST_URL}/api/system/status
+                                
+                                # Run scanner
                                 ${scannerHome}/bin/sonar-scanner \
                                     -Dsonar.projectKey=todo-app \
+                                    -Dsonar.projectName='Todo App' \
                                     -Dsonar.sources=src \
-                                    -Dsonar.host.url="http://sonarqube:9000" \
-                                    -Dsonar.login="${SONAR_TOKEN}" \
+                                    -Dsonar.host.url=${SONAR_HOST_URL} \
+                                    -Dsonar.login=${SONAR_TOKEN} \
+                                    -Dsonar.sourceEncoding=UTF-8 \
+                                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                                    -Dsonar.verbose=true \
                                     -X
                             """
                         }
                     }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: false
                 }
             }
         }
