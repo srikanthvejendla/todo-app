@@ -10,46 +10,60 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/srikanthvejendia/todo-app.git',
-                    branch: 'main'
+                node {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: 'main']],
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/srikanthvejendia/todo-app.git'
+                        ]]
+                    ])
+                }
             }
         }
 
         stage('Setup Node.js') {
             steps {
-                sh '''
-                    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-                    sudo apt-get install -y nodejs
-                    node --version
-                    npm --version
-                '''
+                node {
+                    sh '''
+                        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                        sudo apt-get install -y nodejs
+                        node --version
+                        npm --version
+                    '''
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                node {
+                    sh 'npm ci'
+                }
             }
         }
 
         stage('Run Tests with Coverage') {
             steps {
-                sh 'npm run coverage'
+                node {
+                    sh 'npm run coverage'
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    def scannerHome = tool 'SonarScanner'
-                    withSonarQubeEnv('SonarQube') {
+                node {
+                    withSonarQubeEnv(credentialsId: 'sonar-token', installationName: 'SonarQube') {
                         sh """
-                            ${scannerHome}/bin/sonar-scanner \
+                            sonar-scanner \
                                 -Dsonar.projectKey=modern-todo \
                                 -Dsonar.sources=src \
                                 -Dsonar.tests=src \
                                 -Dsonar.test.inclusions=src/**/*.test.jsx,src/**/*.test.js \
-                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN}
                         """
                     }
                 }
@@ -58,8 +72,10 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
+                node {
+                    timeout(time: 1, unit: 'HOURS') {
+                        waitForQualityGate abortPipeline: true
+                    }
                 }
             }
         }
@@ -67,7 +83,9 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
     }
 } 
