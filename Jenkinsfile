@@ -9,6 +9,7 @@ pipeline {
         SONAR_HOST_URL = credentials('SONAR_HOST_URL')
         SONAR_TOKEN = credentials('SONAR_TOKEN')
         PATH = "$PATH:/usr/local/bin"  // Add Node.js to PATH
+        NVM_DIR = "/var/jenkins_home/.nvm"
     }
 
     stages {
@@ -28,8 +29,17 @@ pipeline {
         stage('Setup Node.js') {
             steps {
                 sh '''
-                    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-                    sudo apt-get install -y nodejs
+                    # Install nvm
+                    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+                    
+                    # Load nvm
+                    . $NVM_DIR/nvm.sh
+                    
+                    # Install Node.js
+                    nvm install 18
+                    nvm use 18
+                    
+                    # Verify installation
                     node --version
                     npm --version
                 '''
@@ -38,13 +48,21 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                sh '''
+                    . $NVM_DIR/nvm.sh
+                    nvm use 18
+                    npm ci
+                '''
             }
         }
 
         stage('Run Tests with Coverage') {
             steps {
-                sh 'npm run coverage'
+                sh '''
+                    . $NVM_DIR/nvm.sh
+                    nvm use 18
+                    npm run coverage
+                '''
             }
         }
 
